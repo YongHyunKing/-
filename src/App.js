@@ -10,6 +10,8 @@ const App = () => {
   const [charge, setCharge] = useState("");
   const [amount, setAmount] = useState(0);
   const [alert, setAlert] = useState(false);
+  const [id, setId] = useState('');
+  const [edit, setEdit] = useState('');
 
 
   const [expenses, setExpenses] = useState([
@@ -18,12 +20,16 @@ const App = () => {
     { id: 3, charge: "식비", amount: 1200 },
   ])
 
+  const clearItems = () => {
+    setExpenses([]);
+  }
+
   const handleCharge = (e) => {
     setCharge(e.target.value)
   }
 
   const handleAmount = (e) => {
-    setAmount(e.target.value);
+    setAmount(e.target.valueAsNumber);
   }
 
   const handleDelete = (id) => {
@@ -39,15 +45,36 @@ const App = () => {
     }, 7000);
   }
 
+  const handleEdit = id => {
+    const expense = expenses.find(item => item.id === id);
+    const { charge, amount } = expense;
+    setId(id);
+    setCharge(charge);
+    setAmount(amount);
+    setEdit(true);
+  }
+
   const handleSubmit = (e) => {
+
     e.preventDefault();
     if (charge !== "" && amount > 0) {
-      const newExpense = { id: crypto.randerUUID, charge, amount };
-      const newExpenses = [...expenses, newExpense];
-      setExpenses(newExpenses);
+      if (edit) {
+        const newExpenses = expenses.map(item => {
+          return item.id === id ? { ...item, charge, amount: amount } : item
+        })
+
+        setExpenses(newExpenses);
+        setEdit(false);
+        handleAlert({ type: 'success', text: '아이템이 수정되었습니다.' });
+      } else {
+        const newExpense = { id: crypto.randerUUID, charge, amount };
+        const newExpenses = [...expenses, newExpense];
+        setExpenses(newExpenses);
+        handleAlert({ type: "success", text: "아이템이 생성되었습니다." });
+      }
       setCharge("");
       setAmount(0);
-      handleAlert({ type: "success", text: "아이템이 생성되었습니다." });
+
     } else {
       console.log('error');
       handleAlert({
@@ -69,21 +96,24 @@ const App = () => {
           handleCharge={handleCharge}
           charge={charge}
           handleAmount={handleAmount}
-          amout={amount}
+          amount={amount}
           handleSubmit={handleSubmit}
+          edit={edit}
         />
       </div>
       <div style={{ width: '100%', backgroundColor: 'white', padding: '1rem' }}>
         <ExpenseList
           initialExpenses={expenses}
           handleDelete={handleDelete}
+          handleEdit={handleEdit}
+          clearItems={clearItems}
         />
       </div>
       <div style={{ display: 'flex', justifyContent: 'end', marginTop: '1rem' }}>
         <p style={{ fontSize: '2rem' }}>
           총지출:
           <span>
-            {expenses.reduce((acc, curr) => { return acc += curr.amount }, 0)}
+            {expenses.reduce((acc, curr) => { return (acc += curr.amount) }, 0)}
             원
           </span>
         </p>
